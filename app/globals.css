@@ -1,0 +1,36 @@
+/* Material UI handles its own baseline and styling. We just need to keep basic Next.js app setup out of the way. */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #f7f9fc;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Liquid Glass Animated Background */
+.animated-bg {
+  background: linear-gradient(-45deg, #0ea5e9, #8b5cf6, #38bdf8, #c4b5fd);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}

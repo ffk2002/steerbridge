@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Stay {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  location    String   // e.g. "NYC, USA"
+  latitude    Float
+  longitude   Float
+  price       Float    // Price per night
+  guests      Int      // Max capacity
+  bedrooms    Int
+  beds        Int
+  baths       Float
+  amenities   String   // JSON stringified array of amenities
+  images      String   // JSON stringified array of image URLs
+  hostId      String
+  hostName    String
+  createdAt   DateTime @default(now())
+
+  reviews   Review[]
+  bookings  Booking[]
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  stayId    String
+  rating    Int      // 1-5
+  content   String
+  authorId  String
+  authorName String
+  createdAt DateTime @default(now())
+
+  stay      Stay     @relation(fields: [stayId], references: [id], onDelete: Cascade)
+  
+  @@index([stayId])
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  stayId        String
+  userId        String   // ID of the person booking
+  checkIn       DateTime
+  checkOut      DateTime
+  guests        Int
+  totalPrice    Float
+  status        String   @default("CONFIRMED") // CONFIRMED, CANCELLED
+  idempotencyKey String  @unique
+  createdAt     DateTime @default(now())
+
+  stay          Stay     @relation(fields: [stayId], references: [id])
+
+  // Prevent double bookings on the same stay intersecting exact dates
+  @@index([stayId, checkIn, checkOut])
+}
