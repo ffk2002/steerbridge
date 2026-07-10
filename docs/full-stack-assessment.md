@@ -73,8 +73,8 @@ Playwright end-to-end tests are optional for this assessment. Use the test level
 Please submit:
 
 - A link to a pull request containing your submission.
-- Your repository should be a clone or fork of the seeded assessment repo.
-- Make your changes on a dedicated branch named `submission/<your-name>`, then open a pull request from that branch against `main`.
+- Create a private repository by cloning the seeded assessment repo and pushing the unchanged starter code to `main`.
+- Make your changes on a dedicated branch named `submission`, then open a pull request from that branch against `main`.
 - A `docs/SUBMISSION.md` file that includes:
   - Roughly how much time you spent.
   - Your implementation plan.
@@ -87,7 +87,7 @@ Please submit:
 
 ## AI Tool Usage
 
-AI coding tools are encouraged. We are interested in how you use them as part of your engineering process, not whether you avoided them.
+AI coding tools are encouraged and expected. We are interested in how you use them as part of your engineering process, not whether you avoided them. You remain responsible for understanding and verifying all submitted work.
 
 Please briefly describe:
 
