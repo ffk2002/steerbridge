@@ -7,10 +7,17 @@ import { logger as globalLogger } from "@/lib/logger";
 
 type Logger = typeof globalLogger;
 
+export class StaySearchValidationError extends Error {
+    constructor(public message: string, public details?: unknown) {
+        super(message);
+        this.name = "StaySearchValidationError";
+    }
+}
+
 export async function handleSearchStays(queryParams: unknown, logger: Logger = globalLogger) {
     const parsed = StaySearchQuerySchema.safeParse(queryParams);
     if (!parsed.success) {
-        throw new Error("Validation failed");
+        throw new StaySearchValidationError("Validation failed", parsed.error.flatten());
     }
 
     const {
