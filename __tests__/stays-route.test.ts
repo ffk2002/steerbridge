@@ -4,7 +4,6 @@ import { GET } from "@/app/api/stays/route";
 
 vi.mock("@/lib/data/stays", () => ({ getStays: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/data/reviews", () => ({ getAverageRating: vi.fn() }));
-vi.mock("@/lib/data/bookings", () => ({ getOverlappingStayIds: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/logger", () => {
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), child: () => logger };
     return { logger };

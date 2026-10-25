@@ -52,3 +52,6 @@ prisma/dev.db*
 /test-results/
 package-lock.json
 docs/PLAN-date-filter.md
+docs/date-filter-changes.puml
+docs/SUBMISSION.md
+docs/SUBMISSION.md

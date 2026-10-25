@@ -7,28 +7,22 @@ export async function getBookingByIdempotencyKey(idempotencyKey: string) {
     });
 }
 
+// Confirmed bookings that overlap the requested range. Shared by the booking check and stay search
+export function overlappingBookingsWhere(checkInDate: Date, checkOutDate: Date): Prisma.BookingWhereInput {
+    return {
+        status: "CONFIRMED",
+        checkIn: { lt: checkOutDate },
+        checkOut: { gt: checkInDate },
+    };
+}
+
 export async function getOverlappingBookings(stayId: string, checkInDate: Date, checkOutDate: Date) {
     return prisma.booking.findFirst({
         where: {
             stayId,
-            status: "CONFIRMED",
-            checkIn: { lt: checkOutDate },
-            checkOut: { gt: checkInDate },
+            ...overlappingBookingsWhere(checkInDate, checkOutDate),
         },
     });
-}
-
-export async function getOverlappingStayIds(checkInDate: Date, checkOutDate: Date): Promise<string[]> {
-    const overlappingBookings = await prisma.booking.findMany({
-        where: {
-            status: "CONFIRMED",
-            checkIn: { lt: checkOutDate },
-            checkOut: { gt: checkInDate },
-        },
-        select: { stayId: true },
-    });
-
-    return [...new Set(overlappingBookings.map((b) => b.stayId))];
 }
 
 export async function createBooking(data: Prisma.BookingUncheckedCreateInput) {
