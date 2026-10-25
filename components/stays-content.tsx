@@ -2,13 +2,21 @@
 
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { StayCard } from "@/components/stay-card";
 import { StayCardSkeletonGrid } from "@/components/stay-card-skeleton";
 import { Box, Button, Typography } from "@mui/material";
 import { SelectChangeEvent } from '@mui/material/Select';
 import SearchIcon from '@mui/icons-material/Search';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
 import { FilterBar } from "@/components/filter-bar";
 import { styled } from "@mui/material/styles";
+import { DateErrors } from "@/lib/hooks/use-stays-search";
+
+// "2026-11-01" -> "Nov 1". Formatted in UTC so the day never shifts with the viewer's timezone
+function formatTripDate(date: string) {
+    return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
 
 const ResultsHeaderBox = styled(Box)(({ theme }) => ({
     paddingLeft: theme.spacing(2),
@@ -116,6 +124,14 @@ interface StaysViewProps {
     setSearchQuery: (val: string) => void;
     guests: string;
     setGuests: (val: string) => void;
+    checkIn: string;
+    setCheckIn: (val: string) => void;
+    checkOut: string;
+    setCheckOut: (val: string) => void;
+    dateErrors: DateErrors;
+    clearDates: () => void;
+    activeCheckIn: string | null;
+    activeCheckOut: string | null;
     sortBy: string;
     viewMode: "split" | "list" | "map";
     setViewMode: (mode: "split" | "list" | "map") => void;
@@ -130,6 +146,8 @@ interface StaysViewProps {
     isLoading: boolean;
     isError: boolean;
     isFetching: boolean;
+    isPlaceholderData: boolean;
+    validationMessage: string | null;
     showList: boolean;
     showMap: boolean;
 }
@@ -137,14 +155,22 @@ interface StaysViewProps {
 function StaysView({
     searchQuery, setSearchQuery,
     guests, setGuests,
+    checkIn, setCheckIn,
+    checkOut, setCheckOut,
+    dateErrors, clearDates,
+    activeCheckIn, activeCheckOut,
     sortBy,
     viewMode, setViewMode, effectiveMode,
     searchParamsQuery,
     hoveredStayId, setHoveredStayId,
     handleSearch, handleSortChange, handleBoundsChange,
-    data, isLoading, isError, isFetching,
+    data, isLoading, isError, isFetching, isPlaceholderData, validationMessage,
     showList, showMap
 }: StaysViewProps) {
+    const hasDates = !!activeCheckIn || !!activeCheckOut;
+    const tripDates = activeCheckIn && activeCheckOut
+        ? `${formatTripDate(activeCheckIn)} – ${formatTripDate(activeCheckOut)}`
+        : null;
 
     const renderedStays = data?.stays.map((stay, index) => (
         <Box
@@ -180,6 +206,12 @@ function StaysView({
                 setSearchQuery={setSearchQuery}
                 guests={guests}
                 setGuests={setGuests}
+                checkIn={checkIn}
+                setCheckIn={setCheckIn}
+                checkOut={checkOut}
+                setCheckOut={setCheckOut}
+                dateErrors={dateErrors}
+                clearDates={clearDates}
                 handleSearch={handleSearch}
                 sortBy={sortBy}
                 handleSortChange={handleSortChange}
@@ -195,9 +227,14 @@ function StaysView({
                         ? `Stays in "${searchParamsQuery}"`
                         : "Explore All Stays"}
                 </Typography>
+                {/* Previous results stay on screen while a new search loads; don't pair their count with the new filters */}
                 {data && (
                     <Typography variant="body2" color="text.secondary">
-                        {data.stays.length} result{data.stays.length !== 1 ? "s" : ""}
+                        {isPlaceholderData
+                            ? "Searching…"
+                            : tripDates
+                            ? `${data.stays.length} stay${data.stays.length !== 1 ? "s" : ""} available · ${tripDates}`
+                            : `${data.stays.length} result${data.stays.length !== 1 ? "s" : ""}`}
                     </Typography>
                 )}
             </ResultsHeaderBox>
@@ -210,8 +247,26 @@ function StaysView({
                         {/* Loading */}
                         {isLoading && <StayCardSkeletonGrid />}
 
+                        {/* Invalid search params, e.g. a hand-edited or stale shared URL */}
+                        {validationMessage && (
+                            <Box sx={{ textAlign: 'center', py: 8 }}>
+                                <Typography variant="h6" color="text.secondary" mb={2}>
+                                    {validationMessage}
+                                </Typography>
+                                {hasDates ? (
+                                    <Button variant="contained" onClick={clearDates}>
+                                        Clear dates
+                                    </Button>
+                                ) : (
+                                    <Button variant="contained" component={Link} href="/stays">
+                                        Reset search
+                                    </Button>
+                                )}
+                            </Box>
+                        )}
+
                         {/* Error */}
-                        {isError && (
+                        {isError && !validationMessage && (
                             <Box sx={{ textAlign: 'center', py: 8 }}>
                                 <Typography variant="h6" color="text.secondary" mb={2}>
                                     Something went wrong while fetching stays.
@@ -223,7 +278,22 @@ function StaysView({
                         )}
 
                         {/* Empty */}
-                        {!isLoading && data && data.stays.length === 0 && (
+                        {!isLoading && data && data.stays.length === 0 && tripDates && (
+                            <EmptySearchBox>
+                                <EventBusyIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                                <Typography variant="h6" fontWeight="bold" color="text.primary" mb={1}>
+                                    No stays available for {tripDates}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" mb={3}>
+                                    Nothing that matches your search is free for these dates. Try different dates, or clear them to search without dates.
+                                </Typography>
+                                <Button variant="outlined" onClick={clearDates}>
+                                    Clear dates
+                                </Button>
+                            </EmptySearchBox>
+                        )}
+
+                        {!isLoading && data && data.stays.length === 0 && !tripDates && (
                             <EmptySearchBox>
                                 <SearchIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
                                 <Typography variant="h6" fontWeight="bold" color="text.primary" mb={1}>
