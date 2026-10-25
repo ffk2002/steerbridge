@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAction } from "@/lib/api-utils";
-import { handleSearchStays } from "@/lib/managers/stay-manager";
+import { handleSearchStays, StaySearchValidationError } from "@/lib/managers/stay-manager";
 
 export const GET = withAction(async (request, { logger: actionLogger }) => {
     const { searchParams } = new URL(request.url);
@@ -14,10 +14,10 @@ export const GET = withAction(async (request, { logger: actionLogger }) => {
 
         return NextResponse.json({ stays });
     } catch (error: unknown) {
-        if (error instanceof Error && error.message === "Validation failed") {
-            actionLogger.warn({ params: queryParams }, "Validation failed for search params");
+        if (error instanceof StaySearchValidationError) {
+            actionLogger.warn({ params: queryParams, details: error.details }, "Validation failed for search params");
             return NextResponse.json(
-                { error: "Validation failed" },
+                { error: error.message, details: error.details },
                 { status: 400 }
             );
         }
