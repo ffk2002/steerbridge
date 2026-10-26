@@ -153,6 +153,17 @@ describe('Availability Overlap Detection', () => {
         ).toBe(true);
     });
 
+    it('detects contained overlap (request inside existing)', () => {
+        expect(
+            hasDateOverlap(
+                new Date('2026-06-11'),
+                new Date('2026-06-13'),
+                existing.checkIn,
+                existing.checkOut
+            )
+        ).toBe(true);
+    });
+
     it('allows adjacent booking (checkout = next checkin)', () => {
         expect(
             hasDateOverlap(

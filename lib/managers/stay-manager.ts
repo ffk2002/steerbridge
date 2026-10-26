@@ -7,10 +7,17 @@ import { logger as globalLogger } from "@/lib/logger";
 
 type Logger = typeof globalLogger;
 
+export class StaySearchValidationError extends Error {
+    constructor(public message: string, public details?: unknown) {
+        super(message);
+        this.name = "StaySearchValidationError";
+    }
+}
+
 export async function handleSearchStays(queryParams: unknown, logger: Logger = globalLogger) {
     const parsed = StaySearchQuerySchema.safeParse(queryParams);
     if (!parsed.success) {
-        throw new Error("Validation failed");
+        throw new StaySearchValidationError("Validation failed", parsed.error.flatten());
     }
 
     const {
@@ -42,13 +49,9 @@ export async function handleSearchStays(queryParams: unknown, logger: Logger = g
         where.longitude = { gte: sw_lng, lte: ne_lng };
     }
 
-    // Availability filtering
-    const stayIdsToExclude = checkIn && checkOut
-        ? await BookingRepository.getOverlappingStayIds(new Date(checkIn), new Date(checkOut))
-        : [];
-
-    if (stayIdsToExclude.length > 0) {
-        where.id = { notIn: stayIdsToExclude };
+    // Availability filtering: only stays with no overlapping confirmed booking, in the same query
+    if (checkIn && checkOut) {
+        where.bookings = { none: BookingRepository.overlappingBookingsWhere(new Date(checkIn), new Date(checkOut)) };
     }
 
     // Since we don't have sort in schema right now we type cast for now

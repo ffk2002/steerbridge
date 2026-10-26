@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DateOnlySchema, refineDateRange } from "@/lib/schemas/date-range";
 
 export const StaySchema = z.object({
   id: z.string().uuid(),
@@ -21,21 +22,13 @@ export const StaySchema = z.object({
 export type Stay = z.infer<typeof StaySchema>;
 
 // Schema for the GET /api/stays query parameters
-export const StaySearchQuerySchema = z.object({
+export const StaySearchQuerySchema = refineDateRange(z.object({
   query: z.string().optional(),
   guests: z.coerce.number().int().positive().optional(),
-  checkIn: z.string().datetime({ offset: true }).optional(),
-  checkOut: z.string().datetime({ offset: true }).optional(),
+  checkIn: DateOnlySchema.optional(),
+  checkOut: DateOnlySchema.optional(),
   sw_lat: z.coerce.number().optional(), // Map Bounds: South West Latitude
   sw_lng: z.coerce.number().optional(),
   ne_lat: z.coerce.number().optional(), // Map Bounds: North East Latitude
   ne_lng: z.coerce.number().optional(),
-}).refine(data => {
-  if (data.checkIn && data.checkOut) {
-    return new Date(data.checkIn) < new Date(data.checkOut);
-  }
-  return true;
-}, {
-  message: "Check-out date must be after check-in date",
-  path: ["checkOut"],
-});
+}));

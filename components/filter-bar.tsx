@@ -1,15 +1,22 @@
-import { Box, Paper, TextField, InputAdornment, Button, FormControl, Select, MenuItem, ToggleButtonGroup, ToggleButton, SelectChangeEvent } from "@mui/material";
+import { Box, Paper, TextField, InputAdornment, Button, FormControl, Select, MenuItem, ToggleButtonGroup, ToggleButton, SelectChangeEvent, IconButton, Typography } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import { styled } from "@mui/material/styles";
+import { DateErrors } from "@/lib/hooks/use-stays-search";
 
 const SearchPillContainer = styled(Paper)(({ theme }) => ({
-    flex: 1,
+    // Full row below lg so the date inputs have room; the sort/view controls wrap underneath
+    flex: '1 1 100%',
+    minWidth: 0, // let native date inputs shrink on narrow screens
+    [theme.breakpoints.up('lg')]: {
+        flex: 1,
+    },
     display: 'flex',
     flexDirection: 'column',
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
         flexDirection: 'row',
         borderRadius: theme.spacing(8),
     },
@@ -53,6 +60,7 @@ const FilterForm = styled('form')({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 16
 });
 
@@ -65,11 +73,37 @@ const SearchInputBox = styled(TextField)(({ theme }) => ({
     },
     borderBottom: '1px solid',
     borderColor: theme.palette.divider,
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
         borderBottom: 'none',
         borderRight: '1px solid',
         borderColor: theme.palette.divider,
     }
+}));
+
+const DateInputBox = styled(TextField)(({ theme }) => ({
+    width: '100%',
+    '& input': { minWidth: 0 },
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(1),
+    '& .MuiInputBase-input': {
+        paddingTop: theme.spacing(0.5),
+        paddingBottom: theme.spacing(1),
+    },
+    borderBottom: '1px solid',
+    borderColor: theme.palette.divider,
+    [theme.breakpoints.up('md')]: {
+        width: 150,
+        borderBottom: 'none',
+        borderRight: '1px solid',
+        borderColor: theme.palette.divider,
+    }
+}));
+
+const DateErrorText = styled(Typography)(({ theme }) => ({
+    maxWidth: 1200,
+    margin: '0 auto',
+    paddingTop: theme.spacing(1),
+    paddingLeft: theme.spacing(2),
 }));
 
 const GuestsInputBox = styled(TextField)(({ theme }) => ({
@@ -80,7 +114,7 @@ const GuestsInputBox = styled(TextField)(({ theme }) => ({
         paddingTop: theme.spacing(1.5),
         paddingBottom: theme.spacing(1.5),
     },
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
         width: 120,
     }
 }));
@@ -92,7 +126,7 @@ const SearchSubmitButton = styled(Button)(({ theme }) => ({
     paddingRight: theme.spacing(3),
     margin: theme.spacing(0.5),
     width: `calc(100% - ${theme.spacing(1)})`,
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
         borderRadius: theme.spacing(8),
         width: 'auto',
     }
@@ -100,6 +134,7 @@ const SearchSubmitButton = styled(Button)(({ theme }) => ({
 
 const DesktopSortDropdown = styled(FormControl)(({ theme }) => ({
     minWidth: 160,
+    marginLeft: 'auto',
     display: 'none',
     [theme.breakpoints.up('md')]: {
         display: 'block',
@@ -117,6 +152,7 @@ const DesktopViewToggles = styled(ToggleButtonGroup)(({ theme }) => ({
 const MobileControlsContainer = styled(Box)(({ theme }) => ({
     display: 'flex',
     gap: theme.spacing(1),
+    marginLeft: 'auto',
     [theme.breakpoints.up('md')]: {
         display: 'none',
     }
@@ -127,6 +163,12 @@ interface FilterBarProps {
     setSearchQuery: (val: string) => void;
     guests: string;
     setGuests: (val: string) => void;
+    checkIn: string;
+    setCheckIn: (val: string) => void;
+    checkOut: string;
+    setCheckOut: (val: string) => void;
+    dateErrors: DateErrors;
+    clearDates: () => void;
     handleSearch: (e?: React.FormEvent, newSortBy?: string) => void;
     sortBy: string;
     handleSortChange: (e: SelectChangeEvent<string>) => void;
@@ -140,6 +182,12 @@ export function FilterBar({
     setSearchQuery,
     guests,
     setGuests,
+    checkIn,
+    setCheckIn,
+    checkOut,
+    setCheckOut,
+    dateErrors,
+    clearDates,
     handleSearch,
     sortBy,
     handleSortChange,
@@ -147,6 +195,11 @@ export function FilterBar({
     setViewMode,
     effectiveMode
 }: FilterBarProps) {
+    // Greys out past check-in dates. Check-out has no min, so a too-early check-out reaches the
+    // hook's validation and shows the inline message instead of the browser's own popup
+    const today = new Date().toISOString().slice(0, 10);
+    const dateErrorMessage = dateErrors.checkIn || dateErrors.checkOut;
+
     return (
         <FilterBarContainer>
             <FilterForm onSubmit={handleSearch}>
@@ -162,6 +215,38 @@ export function FilterBar({
                             startAdornment: (
                                 <InputAdornment position="start" sx={{ pl: 2, pr: 1 }}>
                                     <SearchIcon color="action" />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <DateInputBox
+                        variant="standard"
+                        type="date"
+                        label="Check-in"
+                        value={checkIn}
+                        onChange={(e) => setCheckIn(e.target.value)}
+                        error={!!dateErrors.checkIn}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ min: today, 'aria-describedby': dateErrorMessage ? 'date-error' : undefined }}
+                        InputProps={{ disableUnderline: true }}
+                    />
+                    <DateInputBox
+                        variant="standard"
+                        type="date"
+                        label="Check-out"
+                        sx={{ width: { md: 185 } }} // room for the clear button
+                        value={checkOut}
+                        onChange={(e) => setCheckOut(e.target.value)}
+                        error={!!dateErrors.checkOut}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ 'aria-describedby': dateErrorMessage ? 'date-error' : undefined }}
+                        InputProps={{
+                            disableUnderline: true,
+                            endAdornment: (checkIn || checkOut) && (
+                                <InputAdornment position="end">
+                                    <IconButton size="small" aria-label="Clear dates" onClick={clearDates}>
+                                        <ClearIcon fontSize="small" />
+                                    </IconButton>
                                 </InputAdornment>
                             ),
                         }}
@@ -251,6 +336,12 @@ export function FilterBar({
                     </ToggleButtonGroup>
                 </MobileControlsContainer>
             </FilterForm>
+
+            {dateErrorMessage && (
+                <DateErrorText id="date-error" role="alert" variant="body2" color="error">
+                    {dateErrorMessage}
+                </DateErrorText>
+            )}
         </FilterBarContainer>
     );
 }

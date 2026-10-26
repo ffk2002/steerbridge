@@ -28,7 +28,7 @@ The codebase separates UI, transport, orchestration, domain rules, and data acce
 
 | Method | Endpoint | Responsibility |
 |---|---|---|
-| `GET` | `/api/stays` | Search and list stays |
+| `GET` | `/api/stays` | Search and list stays. Optional `checkIn`/`checkOut` (`YYYY-MM-DD`, both or neither) exclude stays booked for that range |
 | `GET` | `/api/stays/:id` | Fetch stay details |
 | `GET` | `/api/stays/:id/reviews` | List reviews |
 | `POST` | `/api/stays/:id/reviews` | Submit a review |
