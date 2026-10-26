@@ -64,6 +64,8 @@ Describe how you verified the behavior, including any automated tests and manual
   - IMPLEMENTED*
  
 - trade off: in order to add the new query to find available stays, I had to update the stay manager, causing it to include some data layer knowledge - it includes the overlappingBookingsWhere which returns a Prisma object in the manager layer. 
+- improvement: create a helper function in the data layer that handles the prisma querying and data access, and returns a simple object the manager
+  can then use to retain its domain logic
 
 ## AI Tool Usage
 
