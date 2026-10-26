@@ -34,6 +34,15 @@ Approximate time spent: ~3.5 hours
 
 ## Intentionally Skipped
 
+- concurrency risk in booking flow: 
+  - race condition can occur over course of minutes, as verification for possible suspicious activity marked by the bank
+    can require MFA before authorizing a payment. as a result, hold a reservation for about 10 minutes, and if the 
+    payment is not confirmed, remove the reservation from the user's possession for others to view
+
+  - payments authed at same time: solution can be to store bookings in a sql database with PK set to both listing and 
+    dates. this way, there can only be one entry for a booking for a single night. for atomic operations including 
+    multiple nights, entering one row per night that overlaps with another for a booking will result in a failed SQL
+    write, which can be propogated up to the user from the database level
 ## Stack Placement
 
 Briefly explain where you made meaningful changes and why. Consider UI, client state, API contracts, validation, domain logic, persistence, and tests.
