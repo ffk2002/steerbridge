@@ -80,6 +80,10 @@ Describe how you verified the behavior, including any automated tests and manual
 
 Describe how you leveraged AI coding tools during the assessment, including what you used them for and how you reviewed or constrained their output.
 - Used claude to feed the repo's architecture doc, then suggest recommended edits to the specific areas in the stack where the edits should go. Then created plan for the best order of implementation. I prompted it to look for a solution that contains the smallest number of changes, while also adhering to the current design of the app.
+- After each stage, I validated the changes manually using Postman for validator changes and backend changes, and local stack using browser for 
+  UI changes
+- I looked through the query flow through the data layer and saw the query for retrieving specific stays for dates could be simplified, so I asked
+  the AI to simplify the existing 2 step process outlined in the improvements section and integrated with the manager
 - After development was done, for each layer of the app, I prompted it to identify simplifications to the changes made. One of the simplifications was updating the query to find available bookings, moving it from 2 steps to 1, directly filtering out stays that are CONFIRMED booked within the selected dates.
 
 
